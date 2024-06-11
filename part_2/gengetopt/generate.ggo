@@ -1,0 +1,8 @@
+version "0.1"
+package "generate"
+purpose "Lab7 2024 osisp"
+
+args "--unnamed-opts --include-getopt  --file-name=generate_cmdline"
+
+# Options
+option "filename" f "טלÿ פאיכא" string required

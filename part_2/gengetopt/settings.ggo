@@ -1,0 +1,8 @@
+version "0.1"
+package "file_modify"
+purpose "Lab7 2024 osisp"
+
+args "--unnamed-opts --include-getopt"
+
+# Options
+option "filename" f "טלÿ פאיכא" string required
