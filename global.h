@@ -44,4 +44,6 @@ struct Child
 	TAILQ_ENTRY(Child) allChildren;         /* Tail queue. */
 };
 
+extern pthread_cond_t messageInQueue;
+
 #endif // __GLOBALS_H__

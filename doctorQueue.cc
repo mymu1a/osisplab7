@@ -1,7 +1,6 @@
 #include "global.h"
 
 #include "circleQueue.h"
-#include "child.h"
 
 #include <pthread.h>
 #include <signal.h>

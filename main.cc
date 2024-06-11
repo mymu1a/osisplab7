@@ -31,7 +31,7 @@ sem_t semaphoreConsumer;
 //===== Functions =====
 int createChild(unsigned indexChild, char* dirChild, TYPE_CHILD childType);
 CircleHead* createColMessage();
-void stopChildren();
+void stopChildren(pthread_cond_t* cond);
 // stop children threads and optionaly free Children in collection
 void stopChildren(TYPE_CHILD type, bool freeMemory);
 void* threadConsumer(void* pData);
@@ -172,7 +172,7 @@ int main(int argc, char* argv[], char* envp[])
 		}
 		case 'k':								// terminate all Child processes
 		{
-			stopChildren();						// clear resources
+			stopChildren(&messageInQueue);		// clear resources
 			TAILQ_INIT(&colProducer);           /* Initialize the queue. */
 			TAILQ_INIT(&colConsumer);           /* Initialize the queue. */
 			TAILQ_INIT(&colDoctor);             /* Initialize the queue. */
@@ -188,14 +188,17 @@ int main(int argc, char* argv[], char* envp[])
 		}
 	}
 	printf("main OK main\n");
-	stopChildren();								// clear resources
+	stopChildren(&messageInQueue);				// clear resources
 	pthread_exit(NULL);							// exit main thread
 
 	return 0;
 }
 // clear resources
-void stopChildren()
+void stopChildren(pthread_cond_t* cond)
 {
+	// wake up Consumers
+	pthread_cond_broadcast(cond);
+
 	stopChildren(TC_PRODUCER, false /* freeMemory */);			// terminate all Child processes
 	stopChildren(TC_CONSUMER, false /* freeMemory */);			// terminate all Child processes
 	stopChildren(TC_DOCTOR, false /* freeMemory */);			// terminate all Child processes

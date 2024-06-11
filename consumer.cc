@@ -1,7 +1,6 @@
 #include "global.h"
 
 #include "circleQueue.h"
-#include "child.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -12,9 +11,14 @@
 #include <sys/stat.h>        /* For mode constants */
 #include <fcntl.h>           /* For O_* constants */
 
+extern int workToDo;
+
 
 void deleteMessage(struct Message*);
 static void startNanoSleep(char* nameProgram, Child* pChild);
+// wait until a new Message will be added to the Queue
+void waitForWork(char* nameProgram, pthread_cond_t* cond, pthread_mutex_t* mutex);
+
 
 
 void* threadConsumer(void* pData)
@@ -46,7 +50,7 @@ static void startNanoSleep(char* nameProgram, Child* pChild)
 			CircleElement* pElement;
 
 			sem_wait(pSemaphore);
-			pChild->inProcess = true;  // prevent terminating by Exit Signal
+			pChild->inProcess = true;   // prevent terminating by Exit Signal
 
 			pthread_mutex_lock(&pCircleHead->mutex);									// mutex lock
 
@@ -54,7 +58,8 @@ static void startNanoSleep(char* nameProgram, Child* pChild)
 			if (circleQueueNextRead(pCircleHead, &pElement) == false)
 			{
 				printf("  circleQueue is empty -- xxxx --\t");
-
+				waitForWork(nameProgram, &messageInQueue, &pCircleHead->mutex);			// wait until a new Message will be added to the Queue
+				printf("  wakeup after empty Queue -- xxxx --\t");
 			}
 			else
 			{
@@ -100,4 +105,12 @@ void deleteMessage(struct Message* pMessage)
 {
 	free(pMessage->pData);
 	free(pMessage);
+}
+
+// wait until a new Message will be added to the Queue
+void waitForWork(char* nameProgram, pthread_cond_t* cond, pthread_mutex_t* mutex)
+{
+	workToDo = 0;
+	printf("Consumer is waiting ( %s )\n", nameProgram);
+	pthread_cond_wait(cond, mutex);
 }

@@ -1,7 +1,6 @@
 #include "global.h"
 
 #include "circleQueue.h"
-#include "child.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -12,8 +11,12 @@
 #include <sys/stat.h>        /* For mode constants */
 #include <fcntl.h>           /* For O_* constants */
 
+int workToDo = 0;
+pthread_cond_t messageInQueue = PTHREAD_COND_INITIALIZER;
 
 struct Message* createMessage();
+// wake up Consumer ( if any waiting for Message )
+void signalWorkPresent();
 static void startNanoSleep(char* nameProgram, Child* pChild);
 
 
@@ -67,11 +70,13 @@ static void startNanoSleep(char* nameProgram, Child* pChild)
 				printf("  %d ( count write )\t", pCircleHead->countWrite);
 				
 ///				circleQueueLogState(pCircleHead);
+
+				signalWorkPresent();			// wake up Consumer ( if any waiting for Message )
 			}
 			printf(" ( %s )\n", nameProgram);
 
 
-			pChild->inProcess = false;  // prevent terminating by Exit Signal
+			pChild->inProcess = false;			// prevent terminating by Exit Signal
 			pthread_mutex_unlock(&pCircleHead->mutex);									// mutex unlock
 			
 			sem_post(pSemaphore);
@@ -131,4 +136,15 @@ struct Message* createMessage()
 	pMessage->type = 1;
 
 	return pMessage;
+}
+
+// wake up Consumer ( if any waiting for Message )
+void signalWorkPresent()
+{
+	if (workToDo == 1)
+	{
+		printf("Work already present in our Queue ( ~ no Consumer )\n");
+	}
+	workToDo = 1;
+	pthread_cond_signal(&messageInQueue);
 }
